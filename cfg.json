@@ -1,0 +1,6 @@
+{
+    "cluster-name": "foo",
+    "local-port": 1234,
+    "node-id": "test-id",
+    "discovery-port": 2345
+}
