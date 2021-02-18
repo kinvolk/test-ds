@@ -1,0 +1,6 @@
+{
+    "server-ports": {
+        "default": 1234,
+        "lazy": 2345
+    }
+}
