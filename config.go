@@ -3,8 +3,9 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
+
+	"github.com/kinvolk/test-ds/internal"
 )
 
 type Config struct {
@@ -37,21 +38,14 @@ func (cfg Config) Validate() error {
 	if cfg.ClusterName == "" {
 		return errors.New("Empty cluster name")
 	}
-	if err := validatePort(cfg.LocalPort, "local"); err != nil {
+	if err := internal.ValidatePort(cfg.LocalPort, "local"); err != nil {
 		return err
 	}
 	if cfg.NodeID == "" {
 		return errors.New("Empty node ID")
 	}
-	if err := validatePort(cfg.DiscoveryPort, "discovery"); err != nil {
+	if err := internal.ValidatePort(cfg.DiscoveryPort, "discovery"); err != nil {
 		return err
-	}
-	return nil
-}
-
-func validatePort(port int, desc string) error {
-	if port < 1 || port > 65535 {
-		return fmt.Errorf("Invalid %s port %d", desc, port)
 	}
 	return nil
 }
