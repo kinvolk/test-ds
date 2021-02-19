@@ -1,0 +1,7 @@
+{
+    "server-ports":
+    {
+        "default": 2345,
+        "direct": 1234
+    }
+}
