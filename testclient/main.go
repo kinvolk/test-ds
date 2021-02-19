@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/hex"
 	"errors"
 	"flag"
 	"fmt"
@@ -46,14 +45,13 @@ func progMain() error {
 		return fmt.Errorf("unknown server %s", serverName)
 	}
 
-	address := net.JoinHostPort("localhost", strconv.Itoa(port))
+	address := "http://" + net.JoinHostPort("localhost", strconv.Itoa(port))
 	messageReader := strings.NewReader(message)
 	response, err := http.Post(address, "application/octet-stream", messageReader)
 	if err != nil {
 		return err
 	}
 	defer response.Body.Close()
-	encoder := hex.NewEncoder(os.Stdout)
-	_, _ = io.Copy(encoder, response.Body)
+	_, _ = io.Copy(os.Stdout, response.Body)
 	return nil
 }
