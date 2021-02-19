@@ -4,6 +4,9 @@ import (
 	"context"
 	"crypto/md5"
 	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"hash"
 	"io"
 	"net"
 	"net/http"
@@ -38,29 +41,25 @@ func NewServer(ctx context.Context, hash string) *Server {
 }
 
 func sha256sum(w http.ResponseWriter, r *http.Request) {
-	h := sha256.New()
-	if _, err := io.Copy(h, r.Body); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(h.Sum(nil))
+	hashsum(w, r, sha256.New(), "sha256")
 }
 
 func md5sum(w http.ResponseWriter, r *http.Request) {
-	h := md5.New()
-	if _, err := io.Copy(h, r.Body); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(h.Sum(nil))
+	hashsum(w, r, md5.New(), "md5")
 }
 
 func failsum(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusInternalServerError)
+}
+
+func hashsum(w http.ResponseWriter, r *http.Request, h hash.Hash, name string) {
+	if _, err := io.Copy(h, r.Body); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "%s: %s\n", name, hex.EncodeToString(h.Sum(nil)))
 }
 
 func (s *Server) Run(port int) error {
