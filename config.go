@@ -9,10 +9,11 @@ import (
 )
 
 type Config struct {
-	ClusterName   string `json:"cluster-name"`
-	LocalPort     int    `json:"local-port"`
-	NodeID        string `json:"node-id"`
-	DiscoveryPort int    `json:"discovery-port"`
+	ClusterName      string `json:"cluster-name"`
+	LocalPort        int    `json:"local-port"`
+	NodeID           string `json:"node-id"`
+	DiscoveryPort    int    `json:"discovery-port"`
+	ControlPlaneName string `json:"control-plane-name"`
 }
 
 func NewConfig(cfgPath string) (Config, error) {
@@ -46,6 +47,9 @@ func (cfg Config) Validate() error {
 	}
 	if err := internal.ValidatePort(cfg.DiscoveryPort, "discovery"); err != nil {
 		return err
+	}
+	if cfg.ControlPlaneName == "" {
+		return errors.New("Empty control plane name")
 	}
 	return nil
 }

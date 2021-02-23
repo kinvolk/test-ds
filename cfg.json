@@ -2,5 +2,6 @@
     "cluster-name": "foo",
     "local-port": 1234,
     "node-id": "test-id",
-    "discovery-port": 2345
+    "discovery-port": 2345,
+    "control-plane-name": "test-ds"
 }

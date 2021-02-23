@@ -4,10 +4,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
-	"github.com/envoyproxy/go-control-plane/pkg/log"
+	gcplog "github.com/envoyproxy/go-control-plane/pkg/log"
 )
 
 func main() {
@@ -32,28 +33,29 @@ func progMain() error {
 		return err
 	}
 
-	logger := log.LoggerFuncs{
-		DebugFunc: makeLogFunc("DEBUG"),
-		InfoFunc:  makeLogFunc("INFO"),
-		WarnFunc:  makeLogFunc("WARN"),
-		ErrorFunc: makeLogFunc("ERROR"),
+	logger := log.New(os.Stderr, fmt.Sprintf("|%s| ", cfg.ControlPlaneName), log.Lmsgprefix)
+	cacheLogger := gcplog.LoggerFuncs{
+		DebugFunc: makeLogFunc(logger, "DEBUG"),
+		InfoFunc:  makeLogFunc(logger, "INFO"),
+		WarnFunc:  makeLogFunc(logger, "WARN"),
+		ErrorFunc: makeLogFunc(logger, "ERROR"),
 	}
-	scache := cache.NewSnapshotCache(false, cache.IDHash{}, logger)
+	scache := cache.NewSnapshotCache(false, cache.IDHash{}, cacheLogger)
 	if err := scache.SetSnapshot(cfg.NodeID, snapshot); err != nil {
 		return err
 	}
 
 	ctx := context.Background()
-	server := NewServer(ctx, scache)
+	server := NewServer(ctx, scache, logger, cfg.ControlPlaneName)
 	return server.Run(ctx, cfg.DiscoveryPort)
 }
 
-func makeLogFunc(level string) func(string, ...interface{}) {
+func makeLogFunc(logger *log.Logger, level string) func(string, ...interface{}) {
 	return func(format string, args ...interface{}) {
-		logFunc(level, format, args...)
+		logFunc(logger, level, format, args...)
 	}
 }
 
-func logFunc(level, format string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, "%s: "+format+"\n", append([]interface{}{level}, args...))
+func logFunc(logger *log.Logger, level, format string, args ...interface{}) {
+	logger.Printf("%s: "+format, append([]interface{}{level}, args...)...)
 }
