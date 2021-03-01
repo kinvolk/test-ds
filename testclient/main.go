@@ -47,10 +47,20 @@ func progMain() error {
 
 	address := "http://" + net.JoinHostPort("localhost", strconv.Itoa(port))
 	messageReader := strings.NewReader(message)
-	response, err := http.Post(address, "application/octet-stream", messageReader)
+	request, err := http.NewRequest(http.MethodPost, address, messageReader)
 	if err != nil {
 		return err
 	}
+	request.Header.Set("Content-Type", "application/octet-stream")
+	if cfg.HostOverride != "" {
+		request.Host = cfg.HostOverride
+	}
+
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s\n", response.Status)
 	defer response.Body.Close()
 	_, _ = io.Copy(os.Stdout, response.Body)
 	return nil

@@ -9,7 +9,8 @@ import (
 )
 
 type Config struct {
-	ServerPorts map[string]int `json:"server-ports"`
+	ServerPorts  map[string]int `json:"server-ports"`
+	HostOverride string `json:"host-override"`
 }
 
 func NewConfig(cfgPath string) (Config, error) {
@@ -33,11 +34,11 @@ func NewConfig(cfgPath string) (Config, error) {
 
 func (cfg Config) Validate() error {
 	if len(cfg.ServerPorts) == 0 {
-		return errors.New("No server ports specified")
+		return errors.New("no server ports specified")
 	}
 	for name, port := range cfg.ServerPorts {
 		if name == "" {
-			return errors.New("Empty server name")
+			return errors.New("empty server name")
 		}
 		if err := internal.ValidatePort(port, name); err != nil {
 			return err

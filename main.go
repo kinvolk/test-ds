@@ -4,8 +4,10 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
+	"os/signal"
 
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	gcplog "github.com/envoyproxy/go-control-plane/pkg/log"
@@ -28,12 +30,29 @@ func progMain() error {
 		return err
 	}
 
-	snapshot, err := GetSnapshot(cfg.ClusterName, cfg.LocalPort)
+	snapshot, err := GetSnapshot(cfg.ClusterName, cfg.LocalPort, cfg.RouteConfigName, cfg.XDSClusterName)
 	if err != nil {
 		return err
 	}
 
-	logger := log.New(os.Stderr, fmt.Sprintf("|%s| ", cfg.ControlPlaneName), log.Lmsgprefix)
+	logTargets := ([]io.Writer)(nil)
+	if len(cfg.LogTargets) > 0 {
+		for _, logTarget := range cfg.LogTargets {
+			if logTarget == "-" {
+				logTargets = append(logTargets, os.Stderr)
+			} else {
+				f, err := os.Create(logTarget)
+				if err != nil {
+					return err
+				}
+				logTargets = append(logTargets, f)
+				defer f.Close()
+			}
+		}
+	}
+
+	targetWriter := io.MultiWriter(logTargets...)
+	logger := log.New(targetWriter, fmt.Sprintf("|%s| ", cfg.ControlPlaneName), log.Lmsgprefix)
 	cacheLogger := gcplog.LoggerFuncs{
 		DebugFunc: makeLogFunc(logger, "DEBUG"),
 		InfoFunc:  makeLogFunc(logger, "INFO"),
@@ -47,6 +66,13 @@ func progMain() error {
 
 	ctx := context.Background()
 	server := NewServer(ctx, scache, logger, cfg.ControlPlaneName)
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt, os.Kill)
+		go func() {
+			<-c
+			server.Shutdown()
+			return
+		}()
 	return server.Run(ctx, cfg.DiscoveryPort)
 }
 

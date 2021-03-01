@@ -35,13 +35,13 @@ func NewConfig(cfgPath string) (Config, error) {
 
 func (cfg Config) Validate() error {
 	if cfg.Hash == "" {
-		return errors.New("Empty hash")
+		return errors.New("empty hash")
 	}
 	m := map[string]struct{}{}
 	m["sha256"] = struct{}{}
 	m["md5"] = struct{}{}
 	if _, ok := m[cfg.Hash]; !ok {
-		return fmt.Errorf("Invalid hash %s", cfg.Hash)
+		return fmt.Errorf("invalid hash %s", cfg.Hash)
 	}
 	if err := internal.ValidatePort(cfg.Port, "listen"); err != nil {
 		return err

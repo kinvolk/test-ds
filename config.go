@@ -3,17 +3,21 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/kinvolk/test-ds/internal"
 )
 
 type Config struct {
-	ClusterName      string `json:"cluster-name"`
-	LocalPort        int    `json:"local-port"`
-	NodeID           string `json:"node-id"`
-	DiscoveryPort    int    `json:"discovery-port"`
-	ControlPlaneName string `json:"control-plane-name"`
+	ClusterName      string   `json:"cluster-name"`
+	LocalPort        int      `json:"local-port"`
+	NodeID           string   `json:"node-id"`
+	DiscoveryPort    int      `json:"discovery-port"`
+	ControlPlaneName string   `json:"control-plane-name"`
+	LogTargets       []string `json:"log-targets"`
+	RouteConfigName  string   `json:"route-config-name"`
+	XDSClusterName   string   `json:"xds-cluster-name"`
 }
 
 func NewConfig(cfgPath string) (Config, error) {
@@ -37,19 +41,30 @@ func NewConfig(cfgPath string) (Config, error) {
 
 func (cfg Config) Validate() error {
 	if cfg.ClusterName == "" {
-		return errors.New("Empty cluster name")
+		return errors.New("empty cluster name")
 	}
 	if err := internal.ValidatePort(cfg.LocalPort, "local"); err != nil {
 		return err
 	}
 	if cfg.NodeID == "" {
-		return errors.New("Empty node ID")
+		return errors.New("empty node ID")
 	}
 	if err := internal.ValidatePort(cfg.DiscoveryPort, "discovery"); err != nil {
 		return err
 	}
 	if cfg.ControlPlaneName == "" {
-		return errors.New("Empty control plane name")
+		return errors.New("empty control plane name")
+	}
+	for idx, logTarget := range cfg.LogTargets {
+		if logTarget == "" {
+			return fmt.Errorf("log target %d is empty", idx)
+		}
+	}
+	if cfg.RouteConfigName == "" {
+		return errors.New("empty route name")
+	}
+	if cfg.XDSClusterName == "" {
+		return errors.New("empty XDS cluster name")
 	}
 	return nil
 }

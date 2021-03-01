@@ -84,8 +84,13 @@ func (s *Server) Run(ctx context.Context, port int) error {
 	return s.grpcServer.Serve(listener)
 }
 
+func (s *Server) Shutdown() {
+	s.grpcServer.GracefulStop()
+}
+
 func (s *Server) registerGRPC() {
 	discoveryservice.RegisterAggregatedDiscoveryServiceServer(s.grpcServer, s.controlPlaneServer)
 	clusterservice.RegisterClusterDiscoveryServiceServer(s.grpcServer, s.controlPlaneServer)
+	routeservice.RegisterRouteDiscoveryServiceServer(s.grpcServer, s.controlPlaneServer)
 	routeservice.RegisterVirtualHostDiscoveryServiceServer(s.grpcServer, s.vhdsServer)
 }
